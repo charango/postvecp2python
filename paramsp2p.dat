@@ -1,0 +1,41 @@
+##########################################
+### parameter file for postvecp2python ###
+##########################################
+
+# local directory/ies of lsb simulations, can be:
+# out01 if only directory 'out01' is to be considered
+# out01,out02,out03 if you want to display results for the three mentioned directories
+# all if you want to display results for all local directories starting as 'out*'
+directory	out03f_cyl3     # see list of examples above
+movie		No	 	# if more than one directory is specified, do we animate the z-cuts?
+
+### roadmap:
+plot_spectrum	Yes		# display modes spectral content
+plot_qz_eigenfq	No		# display eigenfrequencies for a QZ run
+plot_total_dissipation   No	# display shell-integrated dissipation vs. frequency for various directories
+plot_zcut	Yes		# display meridional (z-) cut of modes
+plot_zcut_3D	Yes		# display meridional (z-) cut of modes, 3D version using paraview
+field		ek		# can be so far: ek (kinetic energy), dissv (viscous dissipation),
+				# et (thermal energy) or disst (thermal dissipation)
+onemode		Yes		# display above quantities for only first computed mode?
+normalizetomax	Yes		# is displayed field normalized to its maximum value?
+fieldmin			# if specified, minimum field value in colorbar
+fieldmax			# if specified, maximum field value in colorbar
+
+### characteristics:
+plot_caract	Yes		# overplot caracteristics on top of meridional cut?
+caract_s_z	0.7,0.1	# if so, enter s and z coordinates of initial point separated by a comma
+last_only	No		# only display last points along characteristics (~attractor)
+eq_file_michel	No		# did equation file use Michel's normalization units?
+
+### output:
+saveaspdf	Yes		# save image as pdf file?
+saveaspng	Yes		# save image as png file?
+
+### display options:
+mycolormap	nipy_spectral	# nipy_spectral, inferno, magma...
+multbyaxisdist		 Yes    # multiply field by distance to rotation axis (to enhance contrast)
+plot_critical_latitudes	 Yes	# display critical latitudes at inner and outer radial edges (solid or shellular rotation only)
+plot_turning_surfaces	 Yes	# display turning surfaces, if any
+plot_critical_layers	 Yes	# display critical layers, if any
+verbose		Yes		# display control stuff
