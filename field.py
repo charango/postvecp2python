@@ -386,10 +386,6 @@ class Field(Mesh):
         # rotation, differential rotation either shellular, cylindrical or
         # conical
 
-        # case where mode has been computed with one of Michel's eq files!
-        if par.eq_file_michel == 'Yes':
-            omegap *= 2.0
-        
         # case 1: solid-body rotation, for which Omega = 1 throughout the shell
         if self.rotation == 'solid':
             Omega = 1.0
@@ -420,7 +416,12 @@ class Field(Mesh):
             Omega = 1.0 + self.epsilon*s*s/(s*s+z*z)
             Az = -4.0*Omega*self.epsilon*(s**3.0)*z*((s*s+z*z)**(-2.0))
             As = 4.0*(Omega**2.0)*(1.0 + self.epsilon*s*s*z*z*((s*s+z*z)**(-2.0))/4.0/Omega/Omega)
-
+        
+        # case where mode has been computed with one of Michel's eq files!
+        if par.eq_file_michel == 'Yes':
+            omegap *= 2.0
+            omegap -= self.m*Omega
+            
         # Doppler-shifted frequency and its square:
         Omegatilde = omegap + self.m*Omega
         omega2 = Omegatilde**2.0
@@ -461,6 +462,7 @@ class Field(Mesh):
         # case where mode has been computed with one of Michel's eq files!
         if par.eq_file_michel == 'Yes':
             omega *= 2.0
+            omega -= self.m
             
         # Doppler-shifted frequencies at inner and outer radii:
         omegatilde_in  = omega + self.m*omega_in
