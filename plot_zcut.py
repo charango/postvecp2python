@@ -28,7 +28,7 @@ def plotzcut():
         if par.movie == 'Yes':
             print('directory ',str(i),' over ',len(par.directory), ' (',par.directory[i],')')
             
-       # read data
+        # read data
         myfield = Field(field=par.field, directory=par.directory[i])
         X = myfield.x
         Y = myfield.y
@@ -131,10 +131,11 @@ def plotzcut():
                     sinthetain,sinthetaout = myfield.compute_critical_latitudes(omega=omi[k])
                 else:
                     sinthetain,sinthetaout = myfield.compute_critical_latitudes(omega=myfield.gamma)
-                xct = np.asarray([myfield.eta-0.02,myfield.eta+0.02])*np.sqrt(1.0-sinthetain**2.0)
-                yct = np.asarray([myfield.eta-0.02,myfield.eta+0.02])*sinthetain
-                line = Line2D(xct, yct, lw=2., color=par.c20[1], alpha=0.7)
-                ax.add_line(line)
+                if myfield.eta != 0.0:
+                    xct = np.asarray([myfield.eta-0.02,myfield.eta+0.02])*np.sqrt(1.0-sinthetain**2.0)
+                    yct = np.asarray([myfield.eta-0.02,myfield.eta+0.02])*sinthetain
+                    line = Line2D(xct, yct, lw=2., color=par.c20[1], alpha=0.7)
+                    ax.add_line(line)
                 xct = np.asarray([1.0-0.02,1.0+0.02])*np.sqrt(1.0-sinthetaout**2.0)
                 yct = np.asarray([1.0-0.02,1.0+0.02])*sinthetaout
                 line = Line2D(xct, yct, lw=2., color=par.c20[1], alpha=0.7)
@@ -145,9 +146,9 @@ def plotzcut():
             # ------------------
             if par.plot_turning_surfaces == 'Yes' or par.plot_critical_layers == 'Yes':
                 if myfield.gamma == 0.0:
-                    (xi,buf,buf,omegatilde) = myfield.compute_dzds_dsdz_caract(omi[k],myfield.n,1.0,X,Y)
+                    (xi,buf,buf,omegatilde) = myfield.compute_dzds_dsdz_caract(omi[k],1.0,X,Y)
                 else:
-                    (xi,buf,buf,omegatilde) = myfield.compute_dzds_dsdz_caract(myfield.gamma,myfield.n,1.0,X,Y)
+                    (xi,buf,buf,omegatilde) = myfield.compute_dzds_dsdz_caract(myfield.gamma,1.0,X,Y)
                 if par.plot_turning_surfaces == 'Yes':
                     plt.contour(X,Y,xi,levels=[0],colors='tab:brown',alpha=1.0,linewidths=2)
                 if par.plot_critical_layers == 'Yes':

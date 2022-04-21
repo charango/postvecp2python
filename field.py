@@ -45,7 +45,17 @@ class Field(Mesh):
             self.globstr += r'$\;\;N$='+str(self.n)
         if 'pr' in dir(self) and self.pr != 0.0:
             self.globstr += r'$\;\;Pr$='+str(self.pr)
-            
+
+        # special case where a radial BVF profile is used, in which
+        # case we read the file and assume N is no longer a constant
+        # but a 1D array:
+        if os.path.isfile(directory+'/BVFprofile'):
+            print('BVFprofile file found: I understand that you have assumed a radially varying Brunt-Vaisala frequency')
+            self.n = np.zeros(self.nr+1, dtype=float)
+            with open(directory+'/BVFprofile', 'r') as f:
+                for i in range(self.nr+1):
+                    self.n[i] = f.readline().split()[1]
+                    
         # case a meridional cut is requested
         if par.plot_zcut == 'Yes':
             if self.verbose == 'Yes':
@@ -96,6 +106,7 @@ class Field(Mesh):
             self.omslope = 0.0
             self.epsilon = 0.0
             self.gamma = 0.0
+            self.eta = 0.0
             self.n = 0.0
             self.pr = 0.0
             for (j, value) in enumerate(res):
@@ -246,11 +257,8 @@ class Field(Mesh):
         # mode's frequency in inertial frame
         omegap = omega  
 
-        # Brunt-Vaisala frequency (assumed uniform)
-        N = self.n
-
         # check that initial condition is in hyperbolique domain (xi > 0)
-        (xi,dzds0,dsdz0,buf) = self.compute_dzds_dsdz_caract(omegap,N,slope,s,z)
+        (xi,dzds0,dsdz0,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
         if (xi < 0.0):
             sys.exit('wrong choice of initial condition for the calculation of characteristics, as xi < 0: ', xi)
 
@@ -265,8 +273,8 @@ class Field(Mesh):
             zarray[k] = z
 
             if k != 0:
-                (xi_prev,dzds_prev,dsdz_prev,buf) = self.compute_dzds_dsdz_caract(omegap,N,slope,sarray[k-1],zarray[k-1])
-            (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omegap,N,slope,s,z)
+                (xi_prev,dzds_prev,dsdz_prev,buf) = self.compute_dzds_dsdz_caract(omegap,slope,sarray[k-1],zarray[k-1])
+            (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
 
             # this 'if condition' is required to avoid newz be a NaN in
             # case xi would be < 0:
@@ -320,7 +328,7 @@ class Field(Mesh):
                 # wrt s, or dzx(z + sds/dz) needs to change sign if we
                 # integrate wrt z
                 if (newr < self.r.min() or newr > self.r.max()):
-                    (bufxi,bufdzds,bufdsdz,buf) = self.compute_dzds_dsdz_caract(omegap,N,slope,s,z)
+                    (bufxi,bufdzds,bufdsdz,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
                     if step_in_ds == True:
                         bufs = s+ds
                         bufz = z+bufdzds*ds
@@ -343,7 +351,7 @@ class Field(Mesh):
                         z = newz+dz
                         s = news+dsdz_prev*dz                    
 
-                (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omegap,N,slope,s,z)
+                (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
                 if step_in_ds == True:
                     news = s+ds
                     newz = z+dzds*ds
@@ -380,7 +388,7 @@ class Field(Mesh):
     # N = Brunt-Vaisala frequency (constant so far)
     # slope = +1 or -1
     # s,z: local coordinates inside the shell
-    def compute_dzds_dsdz_caract(self,omegap,N,slope,s,z):
+    def compute_dzds_dsdz_caract(self,omegap,slope,s,z):
     # ====================================
         # we consider the different cases for differential rotation: solid-body
         # rotation, differential rotation either shellular, cylindrical or
@@ -426,6 +434,23 @@ class Field(Mesh):
         Omegatilde = omegap + self.m*Omega
         omega2 = Omegatilde**2.0
 
+        # Brunt-Vaisala frequency N:
+        # case where N is constant throughout the domain
+        if isinstance(self.n, (list, tuple, np.ndarray)) == False:
+            N = self.n        
+        else:
+        # otherwise a radial profile for N has been used
+            r = np.sqrt(s*s+z*z)
+            if isinstance(r, (list, tuple, np.ndarray)) == True:
+                N = np.zeros_like(r)
+                for i in range(self.nr+1):
+                    for j in range(self.nth):
+                        index = np.argmin(np.abs(self.r-r[i,j]))
+                        N[i,j] = self.n[index]
+            else:
+                index = np.argmin(np.abs(self.r-r))
+                N = self.n[index]
+        
         # xi-parameter (discriminant of the reduced equation), see
         # expression in Mirouh+ 2016 (JFM):        
         xi = Az*(Az/4.0 + 4.0*N*N*s*z) - As*(4.0*N*N*z*z - omega2) - omega2*(omega2 - 4.0*N*N*(s*s+z*z))
