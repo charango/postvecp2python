@@ -3,8 +3,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import subprocess
 import sys
+import colorsys
 import re
 
+from matplotlib.colors import ListedColormap,LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.ticker as ticker
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator, LogLocator, LogFormatter)
@@ -83,8 +85,53 @@ def plotzcut():
                 myfieldmin = par.fieldmin
             if par.fieldmax != '#':
                 myfieldmax = par.fieldmax
-                
+
             mynorm = matplotlib.colors.LogNorm(vmin=myfieldmin,vmax=myfieldmax)
+            
+            # -----------------------
+            # CB: test Lorenzo's color scale used in ParaView:
+            if par.mycolormap == 'Lorenzo':
+
+                array = np.log(abs(array)+1e-11)
+                scalarflat = array.reshape(-1)  # -> 1D array
+                scalarsorted = np.sort(scalarflat)
+                 
+                nr  = len(X)-1
+                nth = len(X[0])-1
+                npoints = nr*nth
+                nbins = int(np.sqrt(npoints))
+                                
+                hue  = np.zeros(nbins)
+                sat  = np.zeros(nbins)
+                val  = np.zeros(nbins)
+                vals = np.ones((nbins, 4))
+                scalarvalue = np.zeros(nbins)
+
+                colorDict = {'red': [], 'green': [], 'blue': []}
+                for ii in range(nbins):
+                    #hue[ii] = (float(ii)/nbins)**0.7*0.14
+                    hue[ii] = (float(ii)/nbins)**3.0*0.14
+                    #val[ii] = (float(ii)/nbins)**0.2
+                    val[ii] = (float(ii)/nbins)**.5
+                    sat[ii] = 1.0
+                    vals[ii,0], vals[ii,1], vals[ii,2] = colorsys.hsv_to_rgb(hue[ii],sat[ii],val[ii])
+                    scalarvalue[ii] = scalarsorted[int(ii*npoints/nbins)]
+
+                # make scalarvalue between 0 and 1:
+                scalarvalue = (scalarvalue-scalarvalue.min())/(scalarvalue.max()-scalarvalue.min())
+                for ii in range(nbins):
+                    colorDict['red'].append((scalarvalue[ii], vals[ii,0], vals[ii,0]))
+                    colorDict['green'].append((scalarvalue[ii], vals[ii,1], vals[ii,1]))
+                    colorDict['blue'].append((scalarvalue[ii], vals[ii,2], vals[ii,2]))
+                
+                colored_cmap = LinearSegmentedColormap('cmap_lorenzo', segmentdata=colorDict)
+                myfieldmin = array.min()
+                myfieldmax = array.max()
+                print(myfieldmin,myfieldmax)
+                mynorm = matplotlib.colors.Normalize(vmin=myfieldmin,vmax=myfieldmax)
+
+                strfield = 'log '+strfield
+            # -----------------------
 
             # -----------------------
             # figure and axes properties
@@ -191,7 +238,8 @@ def plotzcut():
             cax.xaxis.set_label_position('top')
             cax.set_xlabel(strfield)
             cax.xaxis.labelpad = 8
-            cax.xaxis.set_major_locator(ticker.LogLocator(base=10.0,numticks=8))
+            if par.mycolormap != 'Lorenzo':   
+                cax.xaxis.set_major_locator(ticker.LogLocator(base=10.0,numticks=8))
                 
             # ------------------
             # save in pdf or png files
