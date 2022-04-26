@@ -14,6 +14,8 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLoc
 from PIL import Image
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 
+convert_density = 72. # density for conversion between pdf and png.
+
 #   =============
 #   MAIN FUNCTION
 #   =============
@@ -67,8 +69,9 @@ def plotzcut3D():
             # display contour field
             # -----------------------
             im = Image.open(pv_fileout_prefix+'.png')
-            im = OffsetImage(im, zoom=.535 )
-            ab = AnnotationBbox(im, (0.5, 0.5), frameon=False)
+            im = OffsetImage(im, zoom=0.5635*(1-par.elevationfactor/100)*72/convert_density)
+            ab = AnnotationBbox(im, (0.5, 0.499), frameon=False)
+            ab.set(zorder=-100.)
             ax.add_artist(ab)
 
             # ---------------
@@ -134,7 +137,8 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
     nth = len(X[0])-1
     nz = 1
     npoints = nr*nth
-    nbins = int(np.sqrt(npoints))
+    nbins = max(int(np.sqrt(npoints)),1000)
+
 
     array = np.empty_like(myfield.data[:,:,0,k])
     if par.field == 'ek':
@@ -143,12 +147,12 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
         if par.multbyaxisdist == 'Yes':
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-#                   array[ii][jj]=np.log(abs(array[ii][jj]*X[ii][jj])+1.e-32)
-                    array[ii][jj]=np.log(abs(myfield.data[ii, jj, 0, k]*X[ii][jj])+1.e-32)
+#                   array[ii][jj]=np.log10(abs(array[ii][jj]*X[ii][jj])+1.e-32)
+                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 0, k]*X[ii][jj])+1.e-32)
         else:
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-                    array[ii][jj]=np.log(abs(myfield.data[ii, jj, 0, k])+1.e-32)
+                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 0, k])+1.e-32)
 
     if par.field == 'dissv':
         strfield = 'Viscous dissipation'
@@ -156,12 +160,12 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
         if par.multbyaxisdist == 'Yes':
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-#                   array[ii][jj]=np.log(abs(array[ii][jj]*X[ii][jj])+1.e-32)
-                    array[ii][jj]=np.log(abs(myfield.data[ii, jj, 1, k]*X[ii][jj])+1.e-32)
+#                   array[ii][jj]=np.log10(abs(array[ii][jj]*X[ii][jj])+1.e-32)
+                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 1, k]*X[ii][jj])+1.e-32)
         else:
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-                    array[ii][jj]=np.log(abs(myfield.data[ii, jj, 1, k])+1.e-32)
+                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 1, k])+1.e-32)
 
     
 
@@ -177,7 +181,7 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
             for i in range(nr):
                 x     [i, j, k] = X[i,j]
                 y     [i, j, k] = Y[i,j]
-                z     [i, j, k] = array[i,j] * 0.002
+                z     [i, j, k] = array[i,j] * 0.003 * par.elevationfactor
                 scalar[i, j, k] = array[i,j]
     
 #-------------------------------------------------------------------------------
@@ -218,7 +222,7 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
         pointData={"scalar": scalar},
     )
     HOME = os.getenv("HOME")
-    cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; ./pv_zcut3D '+file_colormap+' '+pv_fileout_prefix+'; convert '+pv_fileout_prefix+'.pdf '+pv_fileout_prefix+'.png ' # we need to remove ParaView-UserSettings.json otherwise color palette is taken from that file.
+    cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pv_zcut3D.py '+file_colormap+' '+pv_fileout_prefix+'; convert -density '+str(convert_density)+' '+pv_fileout_prefix+'.pdf '+pv_fileout_prefix+'.png ' # we need to remove ParaView-UserSettings.json otherwise color palette is taken from that file.
 
 #   print ('cmd=',cmd)
     os.system(cmd)

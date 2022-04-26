@@ -13,7 +13,7 @@ from mesh import *
 
 class Field(Mesh):
     def __init__(self, field, directory='', dtype='float64'):
-        if len(directory) > 1:
+        if len(directory) > 0:
             if directory[-1] != '/':
                 directory += '/'
 
@@ -57,7 +57,7 @@ class Field(Mesh):
                     self.n[i] = f.readline().split()[1]
                     
         # case a meridional cut is requested
-        if par.plot_zcut == 'Yes':
+        if (par.plot_zcut == 'Yes' or par.plot_zcut_3D == 'Yes'):
             if self.verbose == 'Yes':
                 print('starting calculation of meridional cuts...')
             if (par.field == 'ek' or par.field == 'dissv' or par.field == 'shear'):

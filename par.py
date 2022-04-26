@@ -114,6 +114,13 @@ if plot_total_dissipation == 'Yes' and len(directory) == 1:
     sys.exit('A plot with total dissipation for several directories has been requested and yet only one directory has been specified. Please modify your paramsp2p.dat file by setting eg directory to "all".')
     
     
+if not('elevationfactor' in open('paramsp2p.dat').read()): 
+    elevationfactor = 1         # used by plot_zcut_3D
+if not('convert_density_factor' in open('paramsp2p.dat').read()):
+    convert_density_factor = 72 # used by plot_zcut_3D
+if not('auto_huefactor' in open('paramsp2p.dat').read()):
+    auto_huefactor = 1.         # used by plot_zcut and plot_zcut_3D
+
 # case an animation is requested
 if movie == 'Yes':
     onemode = 'Yes'

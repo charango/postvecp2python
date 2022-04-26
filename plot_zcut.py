@@ -21,6 +21,11 @@ def plotzcut():
     # first import global variables
     import par
     colored_cmap=par.mycolormap
+    if par.mycolormap == 'auto':
+       strlog = 'log10'
+    else:
+       strlog = ''
+
     
     #print('par.directory =  ', par.directory)
     
@@ -60,6 +65,7 @@ def plotzcut():
                 array = myfield.data[:,:,1,k]
                 strfield = 'Thermal dissipation'
 
+
             # Option to multiply field by distance to rotation axis,
             # to enhance contrast:
             if par.multbyaxisdist == 'Yes':
@@ -67,6 +73,9 @@ def plotzcut():
                     for jj in range(len(X[ii])):
                         array[ii][jj]=array[ii][jj]*X[ii][jj]
                 strfield += r' $\times$ s'
+
+            if (strlog == 'log10'):
+               strfield = 'log10('+strfield+')'
                 
             # -----------------------
             # work out min/max colorbar
@@ -75,7 +84,7 @@ def plotzcut():
                 array /= array.max()
                 myfieldmin = 1e-6
                 myfieldmax = 1.0
-                strfield += ' (normalized to maximum)'
+                strfield += ' (normalized to max.)'
             else:
                 myfieldmax = array.max()
                 myfieldmin = 1e-6 * myfieldmax
@@ -90,17 +99,17 @@ def plotzcut():
             
             # -----------------------
             # CB: test Lorenzo's color scale used in ParaView:
-            if par.mycolormap == 'Lorenzo':
+            if par.mycolormap == 'auto':
 
-                array = np.log(abs(array)+1e-11)
+                array = np.log10(abs(array)+1e-15)
                 scalarflat = array.reshape(-1)  # -> 1D array
                 scalarsorted = np.sort(scalarflat)
                  
                 nr  = len(X)-1
                 nth = len(X[0])-1
                 npoints = nr*nth
-                nbins = int(np.sqrt(npoints))
-                                
+                nbins = max(int(np.sqrt(npoints)),1000)
+                
                 hue  = np.zeros(nbins)
                 sat  = np.zeros(nbins)
                 val  = np.zeros(nbins)
@@ -110,7 +119,7 @@ def plotzcut():
                 colorDict = {'red': [], 'green': [], 'blue': []}
                 for ii in range(nbins):
                     #hue[ii] = (float(ii)/nbins)**0.7*0.14
-                    hue[ii] = (float(ii)/nbins)**3.0*0.14
+                    hue[ii] = (float(ii)/nbins)**3.0*0.19*par.auto_huefactor
                     #val[ii] = (float(ii)/nbins)**0.2
                     val[ii] = (float(ii)/nbins)**.5
                     sat[ii] = 1.0
@@ -124,13 +133,13 @@ def plotzcut():
                     colorDict['green'].append((scalarvalue[ii], vals[ii,1], vals[ii,1]))
                     colorDict['blue'].append((scalarvalue[ii], vals[ii,2], vals[ii,2]))
                 
-                colored_cmap = LinearSegmentedColormap('cmap_lorenzo', segmentdata=colorDict)
+                colored_cmap = LinearSegmentedColormap('cmap_auto', segmentdata=colorDict)
                 myfieldmin = array.min()
                 myfieldmax = array.max()
                 print(myfieldmin,myfieldmax)
                 mynorm = matplotlib.colors.Normalize(vmin=myfieldmin,vmax=myfieldmax)
 
-                strfield = 'log '+strfield
+           #    strfield = 'log10('+strfield+')'
             # -----------------------
 
             # -----------------------
@@ -238,7 +247,7 @@ def plotzcut():
             cax.xaxis.set_label_position('top')
             cax.set_xlabel(strfield)
             cax.xaxis.labelpad = 8
-            if par.mycolormap != 'Lorenzo':   
+            if par.mycolormap != 'auto':   
                 cax.xaxis.set_major_locator(ticker.LogLocator(base=10.0,numticks=8))
                 
             # ------------------
