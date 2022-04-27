@@ -94,7 +94,31 @@ ImportPresets(filename=colormap)
 scalarLUT.ApplyPreset('inertial', True)
 
 # hide color bar/color legend
-structuredvtsDisplay.SetScalarBarVisibility(renderView1, False)
+#structuredvtsDisplay.SetScalarBarVisibility(renderView1, False)
+
+# get color legend/bar for scalarLUT in view renderView1
+scalarLUTColorBar = GetScalarBar(scalarLUT, renderView1)
+
+# change scalar bar placement
+scalarLUTColorBar.WindowLocation = 'AnyLocation'
+scalarLUTColorBar.Position = [0.63, 0.78]
+scalarLUTColorBar.ScalarBarLength = 0.400000000000002
+
+# Properties modified on scalarLUTColorBar
+scalarLUTColorBar.AutoOrient = 0
+scalarLUTColorBar.Orientation = 'Horizontal'
+
+# Properties modified on scalarLUTColorBar
+scalarLUTColorBar.Title = ''
+
+# Properties modified on scalarLUTColorBar
+scalarLUTColorBar.LabelColor = [0.0, 0.0, 0.0]
+
+# Properties modified on scalarLUTColorBar
+# scalarLUTColorBar.WindowLocation = 'UpperRightCorner'
+
+# Properties modified on scalarLUTColorBar
+scalarLUTColorBar.LabelFontSize = 24
 
 # Hide orientation axes
 renderView1.OrientationAxesVisibility = 0

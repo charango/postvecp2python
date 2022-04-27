@@ -69,7 +69,7 @@ def plotzcut3D():
             # display contour field
             # -----------------------
             im = Image.open(pv_fileout_prefix+'.png')
-            im = OffsetImage(im, zoom=0.5635*(1-par.elevationfactor/100)*72/convert_density)
+            im = OffsetImage(im, zoom=0.5635*(1+par.elevationfactor/100)*72/convert_density)
             ab = AnnotationBbox(im, (0.5, 0.499), frameon=False)
             ab.set(zorder=-100.)
             ax.add_artist(ab)
@@ -85,21 +85,18 @@ def plotzcut3D():
                 strsuptitle=strfield
                 if omi[k] != 0.0:
                     strfq  = r'$|\omega|=$'+format(omi[k],'.4f')
-                    strsuptitle=strsuptitle+'\n'+strfq
-                 #  ax.text(0.99,0.99,strfq,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top', clip_on=True) # it doesn't show, so we use suptitle
+                    ax.text(0.99,0.82,strfq,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top', clip_on=True) # it doesn't show, so we use suptitle
                 if omr[k] != 0.0:
                     strtau = r'$\tau=$'+par.str_fmt(omr[k])
-                    strsuptitle=strsuptitle+'\n'+strtau
-                 #  ax.text(0.99,0.94,strtau,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
+                    ax.text(0.99,0.87,strtau,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
             else:
                 strfq  = r'$|\gamma|=$'+format(myfield.gamma,'.4f')
-                strsuptitle=strsuptitle+'\n'+strfq
-              # ax.text(0.99,0.99,strfq,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
+                ax.text(0.99,0.90,strfq,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
             # display global string with main parameters in the bottom
             # use of set_title along with negative pad allows string
             # to be automatically centred in x-position
             ax.set_title(globstr,y=0, pad=-65,fontsize=16,color='black')
-            plt.suptitle(strsuptitle, y=0.90, x=0.75, fontsize=16)
+            plt.suptitle(strsuptitle, y=0.98, x=0.5, fontsize=20)
 
 
             # ------------------
@@ -118,7 +115,7 @@ def plotzcut3D():
 # cleaning:
             cmd = 'rm -f '+file_colormap+' '+pv_fileout_prefix+'*'
 #           print(cmd)
-            os.system(cmd)
+#           os.system(cmd)
             
             if par.onemode == 'Yes':
                 break
@@ -143,31 +140,40 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
     array = np.empty_like(myfield.data[:,:,0,k])
     if par.field == 'ek':
         strfield = 'Kinetic energy'
-#       array = myfield.data[:,:,0,k]
         if par.multbyaxisdist == 'Yes':
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-#                   array[ii][jj]=np.log10(abs(array[ii][jj]*X[ii][jj])+1.e-32)
-                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 0, k]*X[ii][jj])+1.e-32)
+                    array[ii][jj]=abs(myfield.data[ii, jj, 0, k]*X[ii][jj])
         else:
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 0, k])+1.e-32)
+                    array[ii][jj]=abs(myfield.data[ii, jj, 0, k])
 
     if par.field == 'dissv':
-        strfield = 'Viscous dissipation'
-#       array = myfield.data[:,:,1,k]
+        strfield = '|Viscous dissipation|'
         if par.multbyaxisdist == 'Yes':
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-#                   array[ii][jj]=np.log10(abs(array[ii][jj]*X[ii][jj])+1.e-32)
-                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 1, k]*X[ii][jj])+1.e-32)
+                    array[ii][jj]=abs(myfield.data[ii, jj, 1, k]*X[ii][jj])
         else:
             for ii in range(len(X)):
                 for jj in range(len(X[ii])):
-                    array[ii][jj]=np.log10(abs(myfield.data[ii, jj, 1, k])+1.e-32)
+                    array[ii][jj]=abs(myfield.data[ii, jj, 1, k])
 
+    if par.multbyaxisdist == 'Yes':
+        strfield = r'log$_{10}$('+strfield+r' $\times$ s)'
+    else:
+        strfield = 'log10('+strfield+')'
     
+    if par.normalizetomax == 'Yes':
+      # arraymax=array.max()
+        array = np.log10(array/array.max()+1.e-11)
+        strfield += ' (normalized to max.)'
+    else:
+        array = np.log10(array+1.e-32)
+    myfieldmin = array.min()
+    myfieldmax = array.max()
+    print ('minmax:',myfieldmin,myfieldmax)
 
 #   ncells = nr * nth * nz
     
@@ -181,7 +187,7 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
             for i in range(nr):
                 x     [i, j, k] = X[i,j]
                 y     [i, j, k] = Y[i,j]
-                z     [i, j, k] = array[i,j] * 0.003 * par.elevationfactor
+                z     [i, j, k] = array[i,j]/(myfieldmax-myfieldmin) * 0.06 * par.elevationfactor
                 scalar[i, j, k] = array[i,j]
     
 #-------------------------------------------------------------------------------
@@ -199,7 +205,7 @@ def prepare_image(myfield, k, fileout_prefix, pv_fileout_prefix, file_colormap):
     ndata = (nr)*(nth)
 
     for k in range(nbins):
-        hue[k] = (float(k)/nbins)**3.0*0.14
+        hue[k] = (float(k)/nbins)**3.0*0.14*par.auto_huefactor
         val[k] = (float(k)/nbins)**.5
         sat[k] = 1
 
