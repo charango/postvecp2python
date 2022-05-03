@@ -179,7 +179,7 @@ def plotzcut(what=''):
                     sc,zc = myfield.compute_characteristics(niterations=nb_iterations,omega=omi[k])
                 else:
                     sc,zc = myfield.compute_characteristics(niterations=nb_iterations,omega=myfield.gamma)
-                ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color='white')
+                ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color='green')
 
             # ------------------
             # overplot critical latitudes
@@ -371,6 +371,8 @@ def prepare_pv_image(X, Y, array, nr, nth):
 
     if (par.pv_light_intensity == '#'):
         light_intensity = 0.3+0.3*np.tanh(par.elevationfactor) # min(1, 0.3+par.elevationfactor*0.2)
+    else:
+        light_intensity = par.pv_light_intensity
     specular        = par.pv_specular # min (1, par.elevationfactor)
     cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pv_zcut3D.py pv_image.xml pv_image '+str(specular)+' '+str(light_intensity)+'; convert -density '+str(convert_density)+' pv_image.pdf pv_image.png ' 
 #   print ('cmd=',cmd)
