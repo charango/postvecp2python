@@ -14,7 +14,13 @@ plot_spectrum	Yes		# display modes spectral content
 plot_qz_eigenfq	No		# display eigenfrequencies for a QZ run
 plot_total_dissipation   No	# display shell-integrated dissipation vs. frequency for various directories
 plot_zcut	Yes		# display meridional (z-) cut of modes
+auto_huefactor  1.              # hue factor for auto colormap.
 plot_zcut_3D	No		# display meridional (z-) cut of modes, 3D version using paraview
+# parameters for plot_zcut_3D:
+elevationfactor  1.             # elevation enhancement for plot_zcut_3D option. Default is 1.
+pv_specular      0.0            # default is 0. Produces specular reflections
+pv_light_intensity              # If you need to enhance light. default is a function of elevationfactor. 
+
 field		ek		# can be so far: ek (kinetic energy), dissv (viscous dissipation),
 				# et (thermal energy) or disst (thermal dissipation)
 onemode		No		# display above quantities for only first computed mode?

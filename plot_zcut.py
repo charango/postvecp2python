@@ -11,12 +11,16 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.ticker as ticker
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator, LogLocator, LogFormatter)
 
+# to insert image:
+from PIL import Image
+from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+
 from field import *
 
 #   =============
 #   MAIN FUNCTION
 #   =============
-def plotzcut():
+def plotzcut(what=''):
 
     # first import global variables
     import par
@@ -26,9 +30,6 @@ def plotzcut():
     else:
        strlog = ''
 
-    
-    #print('par.directory =  ', par.directory)
-    
     # loop over directories
     for i in range(len(par.directory)):
 
@@ -75,7 +76,7 @@ def plotzcut():
                 strfield += r' $\times$ s'
 
             if (strlog == 'log10'):
-               strfield = 'log10('+strfield+')'
+               strfield = r'log$_{10}$('+strfield+')'
                 
             # -----------------------
             # work out min/max colorbar
@@ -101,7 +102,10 @@ def plotzcut():
             # CB: test Lorenzo's color scale used in ParaView:
             if par.mycolormap == 'auto':
 
-                array = np.log10(abs(array)+1e-15)
+                if par.fieldmin != '#':
+                    array = np.log10(abs(array)+myfieldmin) # 1.e-15
+                else:
+                    array = np.log10(abs(array)+1.e-15)
                 scalarflat = array.reshape(-1)  # -> 1D array
                 scalarsorted = np.sort(scalarflat)
                  
@@ -118,9 +122,7 @@ def plotzcut():
 
                 colorDict = {'red': [], 'green': [], 'blue': []}
                 for ii in range(nbins):
-                    #hue[ii] = (float(ii)/nbins)**0.7*0.14
                     hue[ii] = (float(ii)/nbins)**3.0*0.19*par.auto_huefactor
-                    #val[ii] = (float(ii)/nbins)**0.2
                     val[ii] = (float(ii)/nbins)**.5
                     sat[ii] = 1.0
                     vals[ii,0], vals[ii,1], vals[ii,2] = colorsys.hsv_to_rgb(hue[ii],sat[ii],val[ii])
@@ -136,10 +138,7 @@ def plotzcut():
                 colored_cmap = LinearSegmentedColormap('cmap_auto', segmentdata=colorDict)
                 myfieldmin = array.min()
                 myfieldmax = array.max()
-                print(myfieldmin,myfieldmax)
                 mynorm = matplotlib.colors.Normalize(vmin=myfieldmin,vmax=myfieldmax)
-
-           #    strfield = 'log10('+strfield+')'
             # -----------------------
 
             # -----------------------
@@ -161,7 +160,15 @@ def plotzcut():
             # -----------------------
             # display contour field
             # -----------------------        
-            CF = ax.pcolormesh(X,Y,array,cmap=colored_cmap,norm=mynorm,rasterized=True)
+            if (what == '3D'):
+                CF = ax.pcolormesh (X, Y, array, cmap=colored_cmap, norm=mynorm, rasterized=True, zorder = -200) # this is needed to prepare the colormap legend
+                im = prepare_pv_image (X, Y, array, nr, nth)
+                im = OffsetImage (im, zoom=0.5372)
+                ab = AnnotationBbox (im, (0.499 , 0.4985), frameon=False)
+                ab.set (zorder=-100.)
+                ax.add_artist(ab)
+            else:
+                CF = ax.pcolormesh (X, Y, array, cmap=colored_cmap, norm=mynorm, rasterized=True)
 
             # ------------------
             # overplot characteristics
@@ -253,7 +260,12 @@ def plotzcut():
             # ------------------
             # save in pdf or png files
             # ------------------
-            outfile = par.field+'_mode'+str(k)+'_'+par.directory[i]
+            outfile = par.field+what+'_mode'+str(k)+'_'+par.directory[i]
+            if (par.directory[i] == '.'):
+                outfile = par.field+what+'_mode'+str(k)
+            else:
+                outfile = par.field+what+'_mode'+str(k)+'_'+par.directory[i]
+
             if par.movie == 'Yes':
                 outfile = par.field+str(i).zfill(4)
             fileout = outfile+'.pdf'
@@ -291,3 +303,85 @@ def plotzcut():
         # erase png files
         allfiles = ' '.join(allpngfiles)
         os.system('rm -f '+allfiles)
+
+
+
+# -----------------------
+def prepare_pv_image(X, Y, array, nr, nth):
+# -----------------------
+    from pyevtk.hl import gridToVTK # https://pypi.org/project/pyevtk/
+    import colorsys                 # hsv2rgb
+    import par
+    pv_fileout_prefix = 'pv_image'
+    file_colormap     = 'pv_image.xml'
+    VTK_name = pv_fileout_prefix
+    npoints = nr*nth
+    nz = 1
+    myfieldmin = array.min()
+    myfieldmax = array.max()
+    x  = np.zeros((nr, nth, nz))
+    y  = np.zeros((nr, nth, nz))
+    z  = np.zeros((nr, nth, nz))
+    scalar = np.zeros((nr, nth, nz))
+    for k in range(nz):
+        for j in range(nth):
+            for i in range(nr):
+                x     [i, j, k] = X[i,j]
+                y     [i, j, k] = Y[i,j]
+                z     [i, j, k] = array[i,j]/(myfieldmax-myfieldmin) * 0.06 * par.elevationfactor
+                scalar[i, j, k] = array[i,j] # max(array[i,j], myfieldmin)
+    
+#-------------------------------------------------------------------------------
+# create color palette:
+
+    nbins = max(int(np.sqrt(npoints)),1000)
+    scalarflat = scalar.reshape(-1)
+    scalarsorted = np.sort(scalarflat)
+
+    hue  = np.zeros(nbins)
+    sat  = np.zeros(nbins)
+    val  = np.zeros(nbins)
+
+    fh = open (file_colormap, "w")
+    fh.write ('<ColorMaps>' + "\n" + '<ColorMap name="inertial" space="RGB">' + "\n")
+    for ii in range(nbins):
+       hue[ii] = (float(ii)/nbins)**3.0*0.14*par.auto_huefactor
+       val[ii] = (float(ii)/nbins)**.5
+       sat[ii] = 1
+       red, green, blue = colorsys.hsv_to_rgb(hue[ii],1,val[ii])
+       scalarvalue=scalarsorted[int(ii*npoints/nbins)]
+       fh.write ("<Point x=\"%-13.6f\" o=\"1\" r=\"%-13.6f\" g=\"%-13.6f\" b=\"%-13.6f\"/>\n" % (scalarvalue, red, green, blue))
+ 
+       index = int(ii*npoints/nbins)
+#      print (index, scalarvalue)
+    fh.write ('</ColorMap>' + "\n" + '</ColorMaps>')
+    fh.close()
+#-------------------------------------------------------------------------------
+
+    gridToVTK(
+        VTK_name,
+        x,
+        y,
+        z,
+        pointData={"scalar": scalar},
+    )
+    HOME = os.getenv("HOME")
+    convert_density = 72. # density for conversion between pdf and png.
+# we need to remove ParaView-UserSettings.json otherwise color palette is taken from that file.
+
+    if (par.pv_light_intensity == '#'):
+        light_intensity = 0.3+0.3*np.tanh(par.elevationfactor) # min(1, 0.3+par.elevationfactor*0.2)
+    specular        = par.pv_specular # min (1, par.elevationfactor)
+    cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pv_zcut3D.py pv_image.xml pv_image '+str(specular)+' '+str(light_intensity)+'; convert -density '+str(convert_density)+' pv_image.pdf pv_image.png ' 
+#   print ('cmd=',cmd)
+    os.system(cmd)
+
+    im = Image.open  ('pv_image.png')
+
+# cleaning:
+    cmd = 'rm -f pv_image.xml pv_image.pdf pv_image.png pv_image.vts'
+#   print(cmd)
+    os.system(cmd)
+    return im
+
+

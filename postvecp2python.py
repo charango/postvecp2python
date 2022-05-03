@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # =================================================================== 
 #                        POSTVECP to PYTHON
 # code written by Clement Baruteau (CB) and Lorenzo Valdettaro (LV).
@@ -29,8 +30,8 @@ if par.plot_zcut == 'Yes':
 # DISPLAY MERIDIONAL CUT in 3D via PARAVIEW
 # =====================
 if par.plot_zcut_3D == 'Yes':
-    from plot_zcut_3D import *
-    plotzcut3D()
+    from plot_zcut import *
+    plotzcut('3D')
 
 # =====================
 # DISPLAY MODE's SPECTRAL CONTENT

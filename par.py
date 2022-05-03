@@ -120,6 +120,10 @@ if not('convert_density_factor' in open('paramsp2p.dat').read()):
     convert_density_factor = 72 # used by plot_zcut_3D
 if not('auto_huefactor' in open('paramsp2p.dat').read()):
     auto_huefactor = 1.         # used by plot_zcut and plot_zcut_3D
+if not('pv_specular' in open('paramsp2p.dat').read()):
+    pv_specular = 0.            # used by plot_zcut (3D)
+if not('pv_light_intensity' in open('paramsp2p.dat').read()):
+    pv_light_intensity = 0.     # used by plot_zcut (3D). If 0 we use a function of elevationfactor
 
 # case an animation is requested
 if movie == 'Yes':
