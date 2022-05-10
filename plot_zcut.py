@@ -369,12 +369,15 @@ def prepare_pv_image(X, Y, array, nr, nth):
     convert_density = 72. # density for conversion between pdf and png.
 # we need to remove ParaView-UserSettings.json otherwise color palette is taken from that file.
 
+    
     if (par.pv_light_intensity == '#'):
         light_intensity = 0.3+0.3*np.tanh(par.elevationfactor) # min(1, 0.3+par.elevationfactor*0.2)
     else:
         light_intensity = par.pv_light_intensity
     specular        = par.pv_specular # min (1, par.elevationfactor)
-    cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pv_zcut3D.py pv_image.xml pv_image '+str(specular)+' '+str(light_intensity)+'; convert -density '+str(convert_density)+' pv_image.pdf pv_image.png ' 
+
+    postvecp2python_dir = re.sub('par.py', '', par.__file__)
+    cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pvbatch '+postvecp2python_dir+'/pv_zcut3D.py pv_image.xml pv_image '+str(specular)+' '+str(light_intensity)+'; convert -density '+str(convert_density)+' pv_image.pdf pv_image.png ' 
 #   print ('cmd=',cmd)
     os.system(cmd)
 

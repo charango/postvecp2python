@@ -1,4 +1,3 @@
-#!/usr/bin/pvbatch
 import sys
 colormap          = sys.argv[1]
 pv_fileout_prefix = sys.argv[2]
@@ -193,6 +192,9 @@ renderView1.CameraParallelScale = 0.500
 renderView1 = GetActiveViewOrCreate('RenderView')
 # uncomment following to set a specific view size
 # renderView1.ViewSize = [1037, 652]
+
+# Properties modified on renderView1
+renderView1.Background = [1.0, 1.0, 1.0]
 
 # get layout
 layout1 = GetLayout()
