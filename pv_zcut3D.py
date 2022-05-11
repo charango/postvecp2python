@@ -206,7 +206,7 @@ text1Display = Show(text1, renderView1)
 renderView1.Update()
 
 # Properties modified on text1Display
-text1Display.WindowLocation = 'UpperRightCorner'
+#text1Display.WindowLocation = 'UpperRightCorner'
 
 # Properties modified on text1Display
 text1Display.Color = [0.0, 0.0, 0.0]

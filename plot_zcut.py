@@ -20,8 +20,7 @@ from field import *
 #   =============
 #   MAIN FUNCTION
 #   =============
-def plotzcut(what=''):
-
+def plotzcut(what='', ext=''):
     # first import global variables
     import par
     colored_cmap=par.mycolormap
@@ -164,7 +163,10 @@ def plotzcut(what=''):
                 CF = ax.pcolormesh (X, Y, array, cmap=colored_cmap, norm=mynorm, rasterized=True, zorder = -200) # this is needed to prepare the colormap legend
                 im = prepare_pv_image (X, Y, array, nr, nth)
                 im = OffsetImage (im, zoom=0.5372)
-                ab = AnnotationBbox (im, (0.499 , 0.4985), frameon=False)
+                if ext == 'pdf':
+                    ab = AnnotationBbox (im, (0.477 , 0.484), frameon=False)
+                elif ext == 'png':
+                    ab = AnnotationBbox (im, (0.499 , 0.4985), frameon=False)
                 ab.set (zorder=-100.)
                 ax.add_artist(ab)
             else:
@@ -270,9 +272,11 @@ def plotzcut(what=''):
                 outfile = par.field+str(i).zfill(4)
             fileout = outfile+'.pdf'
             if par.saveaspdf == 'Yes':
-                plt.savefig('./'+fileout, dpi=80)
+                if (what == '3D' and ext == 'pdf' or what != '3D'):
+                   plt.savefig('./'+fileout, dpi=80)
             if par.saveaspng == 'Yes':
-                plt.savefig('./'+re.sub('.pdf', '.png', fileout), dpi=100)
+                if (what == '3D' and ext == 'png' or what != '3D'):
+                   plt.savefig('./'+re.sub('.pdf', '.png', fileout), dpi=100)
             plt.close(fig)
 
             if par.onemode == 'Yes':

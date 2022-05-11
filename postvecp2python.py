@@ -31,7 +31,10 @@ if par.plot_zcut == 'Yes':
 # =====================
 if par.plot_zcut_3D == 'Yes':
     from plot_zcut import *
-    plotzcut('3D')
+    if (par.saveaspdf == 'Yes'):
+        plotzcut('3D', 'pdf')
+    if (par.saveaspng == 'Yes'):
+        plotzcut('3D', 'png')
 
 # =====================
 # DISPLAY MODE's SPECTRAL CONTENT
