@@ -1,4 +1,6 @@
 import sys
+sys.path.append("/usr/lib64/paraview/python3.10/site-packages")
+
 colormap          = sys.argv[1]
 pv_fileout_prefix = sys.argv[2]
 pv_specular       = sys.argv[3]

@@ -349,7 +349,7 @@ def prepare_pv_image(X, Y, array, nr, nth):
     fh = open (file_colormap, "w")
     fh.write ('<ColorMaps>' + "\n" + '<ColorMap name="inertial" space="RGB">' + "\n")
     for ii in range(nbins):
-       hue[ii] = (float(ii)/nbins)**3.0*0.14*par.auto_huefactor
+       hue[ii] = (float(ii)/nbins)**3.0*0.19*par.auto_huefactor
        val[ii] = (float(ii)/nbins)**.5
        sat[ii] = 1
        red, green, blue = colorsys.hsv_to_rgb(hue[ii],1,val[ii])
@@ -381,7 +381,7 @@ def prepare_pv_image(X, Y, array, nr, nth):
     specular        = par.pv_specular # min (1, par.elevationfactor)
 
     postvecp2python_dir = re.sub('par.py', '', par.__file__)
-    cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pvbatch '+postvecp2python_dir+'/pv_zcut3D.py pv_image.xml pv_image '+str(specular)+' '+str(light_intensity)+'; convert -density '+str(convert_density)+' pv_image.pdf pv_image.png ' 
+    cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pvbatch '+postvecp2python_dir+'/pv_zcut3D.py pv_image.xml pv_image '+str(specular)+' '+str(light_intensity)+'; convert -density '+str(convert_density)+' -fuzz 1% -fill \'rgb(255,255,255)\' -opaque \'rgb(84,86,108)\' pv_image.pdf pv_image.png ' 
 #   print ('cmd=',cmd)
     os.system(cmd)
 
