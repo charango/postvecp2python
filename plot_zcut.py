@@ -21,6 +21,7 @@ from field import *
 #   MAIN FUNCTION
 #   =============
 def plotzcut(what='', ext=''):
+
     # first import global variables
     import par
     colored_cmap=par.mycolormap
@@ -98,7 +99,7 @@ def plotzcut(what='', ext=''):
             mynorm = matplotlib.colors.LogNorm(vmin=myfieldmin,vmax=myfieldmax)
             
             # -----------------------
-            # CB: test Lorenzo's color scale used in ParaView:
+            # CB: Lorenzo's color scale used in ParaView:
             if par.mycolormap == 'auto':
 
                 if par.fieldmin != '#':
@@ -161,6 +162,8 @@ def plotzcut(what='', ext=''):
             # -----------------------        
             if (what == '3D'):
                 CF = ax.pcolormesh (X, Y, array, cmap=colored_cmap, norm=mynorm, rasterized=True, zorder = -200) # this is needed to prepare the colormap legend
+                nr  = len(X)-1
+                nth = len(X[0])-1
                 im = prepare_pv_image (X, Y, array, nr, nth)
                 im = OffsetImage (im, zoom=0.5372)
                 if ext == 'pdf':
@@ -181,7 +184,10 @@ def plotzcut(what='', ext=''):
                     sc,zc = myfield.compute_characteristics(niterations=nb_iterations,omega=omi[k])
                 else:
                     sc,zc = myfield.compute_characteristics(niterations=nb_iterations,omega=myfield.gamma)
-                ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color='green')
+                if par.mycolormap == 'auto':
+                    ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color='green')
+                else:
+                    ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color='white')
 
             # ------------------
             # overplot critical latitudes
@@ -373,16 +379,16 @@ def prepare_pv_image(X, Y, array, nr, nth):
     convert_density = 72. # density for conversion between pdf and png.
 # we need to remove ParaView-UserSettings.json otherwise color palette is taken from that file.
 
-    
     if (par.pv_light_intensity == '#'):
         light_intensity = 0.3+0.3*np.tanh(par.elevationfactor) # min(1, 0.3+par.elevationfactor*0.2)
     else:
         light_intensity = par.pv_light_intensity
     specular        = par.pv_specular # min (1, par.elevationfactor)
-
+    
     postvecp2python_dir = re.sub('par.py', '', par.__file__)
     cmd = 'rm -f '+HOME+'/.config/ParaView/ParaView-UserSettings.json; pvbatch '+postvecp2python_dir+'/pv_zcut3D.py pv_image.xml pv_image '+str(specular)+' '+str(light_intensity)+'; convert -density '+str(convert_density)+' -fuzz 1% -fill \'rgb(255,255,255)\' -opaque \'rgb(84,86,108)\' pv_image.pdf pv_image.png ' 
-#   print ('cmd=',cmd)
+    
+    #print ('cmd=',cmd)
     os.system(cmd)
 
     im = Image.open  ('pv_image.png')

@@ -43,6 +43,7 @@ class Field(Mesh):
             self.globstr += r'$\;\;\epsilon$='+str(self.epsilon)
         if 'n' in dir(self) and self.n != 0.0:
             self.globstr += r'$\;\;N$='+str(self.n)
+            self.n2 = self.n*self.n
         if 'pr' in dir(self) and self.pr != 0.0:
             self.globstr += r'$\;\;Pr$='+str(self.pr)
 
@@ -51,10 +52,22 @@ class Field(Mesh):
         # but a 1D array:
         if os.path.isfile(directory+'/BVFprofile'):
             print('BVFprofile file found: I understand that you have assumed a radially varying Brunt-Vaisala frequency')
-            self.n = np.zeros(self.nr+1, dtype=float)
+            self.n  = np.zeros(self.nr+1, dtype=float)
+            self.n2 = np.zeros(self.nr+1, dtype=float)
             with open(directory+'/BVFprofile', 'r') as f:
                 for i in range(self.nr+1):
-                    self.n[i] = f.readline().split()[1]
+                    self.n[i] = float(f.readline().split()[1])
+            self.n2 = self.n*self.n
+                    
+        if os.path.isfile(directory+'/Nth2mu2profile'):
+            print('Nth2mu2profile file found: I understand that you have assumed radially varying thermal and molecular Brunt-Vaisala frequencies (squared)')
+            self.n2 = np.zeros(self.nr+1, dtype=float)
+            with open(directory+'/Nth2mu2profile', 'r') as f:
+                for i in range(self.nr+1):
+                    buf = f.readline().split()
+                    bufth = float(buf[1])   # Nth^2 < 0
+                    bufmu = float(buf[2])   # Nmu^2 > 0
+                    self.n2[i] = bufth - bufmu 
                     
         # case a meridional cut is requested
         if (par.plot_zcut == 'Yes' or par.plot_zcut_3D == 'Yes'):
@@ -260,7 +273,8 @@ class Field(Mesh):
         # check that initial condition is in hyperbolique domain (xi > 0)
         (xi,dzds0,dsdz0,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
         if (xi < 0.0):
-            sys.exit('wrong choice of initial condition for the calculation of characteristics, as xi < 0: ', xi)
+            print('beware that xi = ',xi)
+            sys.exit('wrong choice of initial condition for the calculation of characteristics, as xi < 0: ')
 
         # ==============================
         # we integrate the equation of characteristics by iteration,
@@ -434,37 +448,43 @@ class Field(Mesh):
         Omegatilde = omegap + self.m*Omega
         omega2 = Omegatilde**2.0
 
-        # Brunt-Vaisala frequency N:
-        # case where N is constant throughout the domain
-        if isinstance(self.n, (list, tuple, np.ndarray)) == False:
-            N = self.n        
+        # Brunt-Vaisala frequency squared N2:
+        # case where N or N2 are constant throughout the domain
+        if isinstance(self.n2, (list, tuple, np.ndarray)) == False:
+            N2 = self.n2
         else:
-        # otherwise a radial profile for N has been used
+        # otherwise a radial profile for N or N2 has been used
             r = np.sqrt(s*s+z*z)
             if isinstance(r, (list, tuple, np.ndarray)) == True:
-                N = np.zeros_like(r)
+                N2 = np.zeros_like(r)
                 for i in range(self.nr+1):
                     for j in range(self.nth):
                         index = np.argmin(np.abs(self.r-r[i,j]))
-                        N[i,j] = self.n[index]
+                        N2[i,j] = self.n2[index]
             else:
                 index = np.argmin(np.abs(self.r-r))
-                N = self.n[index]
+                N2 = self.n2[index]
+        '''
+        if N2 > 0.0:
+            N = np.sqrt(N2)
+        else:
+            N = 0.0
+        '''
         
         # xi-parameter (discriminant of the reduced equation), see
         # expression in Mirouh+ 2016 (JFM):        
-        xi = Az*(Az/4.0 + 4.0*N*N*s*z) - As*(4.0*N*N*z*z - omega2) - omega2*(omega2 - 4.0*N*N*(s*s+z*z))
+        xi = Az*(Az/4.0 + 4.0*N2*s*z) - As*(4.0*N2*z*z - omega2) - omega2*(omega2 - 4.0*N2*(s*s+z*z))
         
         # slopes dz/ds and ds/dz of the caracteristics:
-        num = 4.0*N*N*s*z + 0.5*Az + slope*np.sqrt(xi)
-        den = omega2 - 4.0*N*N*z*z
+        num = 4.0*N2*s*z + 0.5*Az + slope*np.sqrt(xi)
+        den = omega2 - 4.0*N2*z*z
         dzds = num/den
 
-        num = 4.0*N*N*s*z + 0.5*Az - slope*np.sqrt(xi)
-        den = omega2 - As - 4.0*N*N*s*s
+        num = 4.0*N2*s*z + 0.5*Az - slope*np.sqrt(xi)
+        den = omega2 - As - 4.0*N2*s*s
         dsdz = num/den
 
-        omegatilde_crit = Omegatilde - 2.0*N*z
+        omegatilde_crit = Omegatilde - 2.0*np.sqrt(N2)*z
         return (xi,dzds,dsdz,omegatilde_crit) # instead of omegatilde as last argument
     
 
