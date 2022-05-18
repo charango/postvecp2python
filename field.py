@@ -67,7 +67,7 @@ class Field(Mesh):
                     buf = f.readline().split()
                     bufth = float(buf[1])   # Nth^2 < 0
                     bufmu = float(buf[2])   # Nmu^2 > 0
-                    self.n2[i] = bufth - bufmu 
+                    self.n2[i] = bufth + bufmu 
                     
         # case a meridional cut is requested
         if (par.plot_zcut == 'Yes' or par.plot_zcut_3D == 'Yes'):
@@ -439,7 +439,9 @@ class Field(Mesh):
             Az = -4.0*Omega*self.epsilon*(s**3.0)*z*((s*s+z*z)**(-2.0))
             As = 4.0*(Omega**2.0)*(1.0 + self.epsilon*s*s*z*z*((s*s+z*z)**(-2.0))/4.0/Omega/Omega)
         
-        # case where mode has been computed with one of Michel's eq files!
+        # case where mode has been computed with one of Michel's eq
+        # files, ie with Michel's code units where time is in units of
+        # 1/2Omega instead of 1/Omega!
         if par.eq_file_michel == 'Yes':
             omegap *= 2.0
             omegap -= self.m*Omega
@@ -464,27 +466,28 @@ class Field(Mesh):
             else:
                 index = np.argmin(np.abs(self.r-r))
                 N2 = self.n2[index]
-        '''
-        if N2 > 0.0:
-            N = np.sqrt(N2)
-        else:
-            N = 0.0
-        '''
-        
+
+        # case where mode has been computed with one of Michel's eq
+        # files, ie with Michel's code units where time is in units of
+        # 1/2Omega instead of 1/Omega!
+        if par.eq_file_michel == 'Yes':
+            N2 *= 4.0
+                
+        r2 = s*s + z*z
         # xi-parameter (discriminant of the reduced equation), see
-        # expression in Mirouh+ 2016 (JFM):        
-        xi = Az*(Az/4.0 + 4.0*N2*s*z) - As*(4.0*N2*z*z - omega2) - omega2*(omega2 - 4.0*N2*(s*s+z*z))
+        # expression in Mirouh+ 2016 (JFM) but N2 -> N2/r2:        
+        xi = Az*(Az/4.0 + N2*s*z/r2) - As*(N2*z*z/r2 - omega2) - omega2*(omega2 - N2)
         
         # slopes dz/ds and ds/dz of the caracteristics:
-        num = 4.0*N2*s*z + 0.5*Az + slope*np.sqrt(xi)
-        den = omega2 - 4.0*N2*z*z
+        num = N2*s*z/r2 + 0.5*Az + slope*np.sqrt(xi)
+        den = omega2 - N2*z*z/r2
         dzds = num/den
-
-        num = 4.0*N2*s*z + 0.5*Az - slope*np.sqrt(xi)
-        den = omega2 - As - 4.0*N2*s*s
+        omegatilde_crit = den
+        
+        num = N2*s*z/r2 + 0.5*Az - slope*np.sqrt(xi)
+        den = omega2 - As - N2*s*s/r2
         dsdz = num/den
-
-        omegatilde_crit = Omegatilde - 2.0*np.sqrt(N2)*z
+        
         return (xi,dzds,dsdz,omegatilde_crit) # instead of omegatilde as last argument
     
 
