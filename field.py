@@ -46,6 +46,8 @@ class Field(Mesh):
             self.n2 = self.n*self.n
         if 'pr' in dir(self) and self.pr != 0.0:
             self.globstr += r'$\;\;Pr$='+str(self.pr)
+        if 'sc' in dir(self) and self.sc != 0.0:
+            self.globstr += r'$\;\;Sc$='+str(self.sc)
 
         # special case where a radial BVF profile is used, in which
         # case we read the file and assume N is no longer a constant
