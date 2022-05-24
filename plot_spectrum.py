@@ -83,6 +83,7 @@ def plotspectrum():
                 ax[0].plot(X, ck_var2[ck_var2!=0.0], color=par.c20[4], lw=2., linestyle=linestyle_dom[0], label=myfield.variables[2])
                 for d in range(1,ndom):
                     ck_var2 = myfield.ck[:,d,2,k]
+                    Xd = np.arange(len(ck_var0[ck_var2!=0.0]))
                     ax[0].plot(Xd, ck_var2[ck_var2!=0.0], color=par.c20[4], lw=2., linestyle=linestyle_dom[d])
                     
             # legend put only once
