@@ -29,6 +29,12 @@ def plotspectrum():
         omr = myfield.omr
         omi = myfield.omi
         globstr = myfield.globstr
+
+        # get number of domains
+        ndom = len(myfield.ck[0,:,0,0])
+
+        # different linestyles for different domains (dimension should be enough!...)
+        linestyle_dom = ['solid','dotted','dashed','dashdot','loosely dotted','loosely dashed','loosely dashdotted']
         
         # loop over modes
         for k in range(myfield.nmodes):
@@ -36,18 +42,13 @@ def plotspectrum():
             # -----------------------
             # get data to be displayed and array name
             # -----------------------
-            # one domain assumed -> second index set to 0
-            ckw = myfield.ck[:,0,0,k]
-            cku = myfield.ck[:,0,1,k]
-            # means a priori that temperature was computed as a third variable in the equations
-            if len(myfield.ck[0,0,:,0]) == 3:
-                ckt = myfield.ck[:,0,2,k]
-            clw = myfield.cl[:,0,0,k]
-            clu = myfield.cl[:,0,1,k]
-            # means a priori that temperature was computed as a third variable in the equations
-            if len(myfield.cl[0,0,:,0]) == 3:
-                clt = myfield.cl[:,0,2,k]
-            
+
+            # first: one domain assumed -> second index set to 0
+            ck_var0 = myfield.ck[:,0,0,k]
+            ck_var1 = myfield.ck[:,0,1,k]
+            cl_var0 = myfield.cl[:,0,0,k]
+            cl_var1 = myfield.cl[:,0,1,k]
+
             # -----------------------
             # figure and axes properties
             # -----------------------
@@ -63,16 +64,29 @@ def plotspectrum():
             ax[0].set_yscale('log')
             ax[0].set_xlabel('k')
             ax[0].set_ylabel(r'$C_k$')
-            X = np.arange(len(cku))
+            X = np.arange(len(ck_var0[ck_var0!=0.0]))
             ax[0].set_xlim(X.min(),X.max())
             ax[0].grid(axis='both', which='major', ls='-', alpha=0.8)
-            ax[0].plot(X, cku, color=par.c20[0], lw=2., linestyle = 'solid', label=r'$u_l$')
-            ax[0].plot(X, ckw, color=par.c20[1], lw=2., linestyle = 'solid', label=r'$w_l$')
-            if len(myfield.ck[0,0,:,0]) == 3:
-                ax[0].plot(X, ckt, color=par.c20[2], lw=2., linestyle = 'solid', label=r'$t_l$')
+            ax[0].plot(X, ck_var0[ck_var0!=0.0], color=par.c20[0], lw=2., linestyle=linestyle_dom[0], label=myfield.variables[0])
+            ax[0].plot(X, ck_var1[ck_var1!=0.0], color=par.c20[1], lw=2., linestyle=linestyle_dom[0], label=myfield.variables[1])
 
+            # loop over domains
+            for d in range(1,ndom):
+                ck_var0 = myfield.ck[:,d,0,k]
+                ck_var1 = myfield.ck[:,d,1,k]
+                Xd = np.arange(len(ck_var0[ck_var0!=0.0]))
+                ax[0].plot(Xd, ck_var0[ck_var0!=0.0], color=par.c20[0], lw=2., linestyle=linestyle_dom[d])
+                ax[0].plot(Xd, ck_var1[ck_var1!=0.0], color=par.c20[1], lw=2., linestyle=linestyle_dom[d])
+    
+            if len(myfield.ck[0,0,:,0]) == 3:
+                ck_var2 = myfield.ck[:,0,2,k]
+                ax[0].plot(X, ck_var2[ck_var2!=0.0], color=par.c20[4], lw=2., linestyle=linestyle_dom[0], label=myfield.variables[2])
+                for d in range(1,ndom):
+                    ck_var2 = myfield.ck[:,d,2,k]
+                    ax[0].plot(Xd, ck_var2[ck_var2!=0.0], color=par.c20[4], lw=2., linestyle=linestyle_dom[d])
+                    
             # legend put only once
-            legend = fig.legend(loc='lower left',fontsize=16,facecolor='white',edgecolor='white',framealpha=1.0,numpoints=1,bbox_to_anchor=(0.02,0.02),bbox_transform=plt.gcf().transFigure)
+            legend = fig.legend(loc='lower left',fontsize=16,facecolor='white',edgecolor='white',framealpha=1.0,numpoints=1,bbox_to_anchor=(0.001,0.001),bbox_transform=plt.gcf().transFigure)
             for line, text in zip(legend.get_lines(), legend.get_texts()):
                 text.set_color(line.get_color())
                         
@@ -83,15 +97,28 @@ def plotspectrum():
             ax[1].set_yscale('log')
             ax[1].set_xlabel('l')
             ax[1].set_ylabel(r'$C_l$')
-            X = np.arange(len(clu))
+            X = np.arange(len(cl_var0))
             ax[1].set_xlim(X.min(),X.max())
             ax[1].grid(axis='both', which='major', ls='-', alpha=0.8)
             index0 = myfield.lmin[0]+2*np.arange(1+(myfield.lmax-myfield.lmin[0])/2.0)
             index1 = myfield.lmin[1]+2*np.arange(1+(myfield.lmax-myfield.lmin[1])/2.0)
-            ax[1].plot(index0, clu[0:len(index0)], color=par.c20[0], lw=2., linestyle = 'solid', label=r'$u_l$')
-            ax[1].plot(index1, clw[0:len(index1)], color=par.c20[1], lw=2., linestyle = 'solid', label=r'$w_l$')
+            ax[1].plot(index0, cl_var0[0:len(index0)], color=par.c20[0], lw=2., linestyle=linestyle_dom[0], label=myfield.variables[0])
+            ax[1].plot(index1, cl_var1[0:len(index1)], color=par.c20[1], lw=2., linestyle=linestyle_dom[0], label=myfield.variables[1])
+
+            # loop over domains
+            for d in range(1,ndom):
+                cl_var0 = myfield.cl[:,d,0,k]
+                cl_var1 = myfield.cl[:,d,1,k]
+                ax[1].plot(index0, cl_var0[0:len(index0)], color=par.c20[0], lw=2., linestyle=linestyle_dom[d])
+                ax[1].plot(index1, cl_var1[0:len(index1)], color=par.c20[1], lw=2., linestyle=linestyle_dom[d])
+                
             if len(myfield.cl[0,0,:,0]) == 3:
-                ax[1].plot(index1, clt[0:len(index1)], color=par.c20[2], lw=2., linestyle = 'solid', label=r'$t_l$')
+                cl_var2 = myfield.cl[:,0,2,k]
+                ax[1].plot(index1, cl_var2[0:len(index1)], color=par.c20[4], lw=2., linestyle=linestyle_dom[0], label=myfield.variables[2])
+                # loop over domains
+                for d in range(1,ndom):
+                    cl_var2 = myfield.cl[:,d,2,k]
+                    ax[1].plot(index1, cl_var2[0:len(index1)], color=par.c20[4], lw=2., linestyle=linestyle_dom[d])
             
             plt.subplots_adjust(left=0.10, bottom=0.15, right=0.97, top=0.95, wspace=0.3)
 
