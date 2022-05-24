@@ -57,8 +57,7 @@ def plottotaldissipation():
     # modes with negative damping rates are shown by a blue filled
     # circle, those with positive damping rates are shown by a red
     # filled circle
-    ax.scatter(X,np.abs(Y),s=10,marker='
-o',color='tab:blue')
+    ax.scatter(X,np.abs(Y),s=10,marker='o',color='tab:blue')
 
     # display global string with main parameters in the bottom
     # use of set_title along with negative pad allows string
