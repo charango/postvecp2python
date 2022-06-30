@@ -87,7 +87,7 @@ class Field(Mesh):
         if par.plot_spectrum == 'Yes':
             if self.verbose == 'Yes':
                 print('now plotting modes spectral content...')
-            (self.ck,self.cl) = self.read_spectra()
+            (self.ck,self.cl,self.variables) = self.read_spectra()
             if self.verbose == 'Yes':
                 print('done!')
 
@@ -217,13 +217,16 @@ class Field(Mesh):
             ck = np.zeros((self.nr+1, self.ndomains, nc, self.nmodes), dtype=float)
             cl = np.zeros((self.lmax - self.lmin + 1, self.ndomains, nc, self.nmodes), dtype=float)
             self.lmin = np.zeros(nc, dtype=int)
-
+            variables = []
+            
             # loop over modes
             for k in range(self.nmodes):
                 f.readline()  # (omr,omi)
                 # loop on variables
                 for n in range(nc):
-                    f.readline()  # variable name
+                    buf = f.readline()
+                    # keep variable name
+                    variables.append(buf[0])
                     # loop on domains
                     for domain in range(self.ndomains):
                         nzd = self.nzd[domain]
@@ -235,7 +238,7 @@ class Field(Mesh):
                         for domain in range(self.ndomains):
                             cl[:nl, domain, n, k] = self.read_scalar(f, nl)
 
-            return (ck,cl)
+            return (ck,cl,variables)
     
 
     def compute_characteristics(self,omega,niterations=10000,sstart=0.4,zstart=0.4):
