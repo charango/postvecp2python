@@ -79,6 +79,8 @@ class Field(Mesh):
                 (self.data,self.field_names) = self.read_field('dissec')
             if (par.field == 'et' or par.field == 'disst'):
                 (self.data,self.field_names) = self.read_field('temper')
+            if (par.field == 'emu' or par.field == 'dissmu'):
+                (self.data,self.field_names) = self.read_field('molec_weight')
             if self.verbose == 'Yes':
                 print('done!')
              
