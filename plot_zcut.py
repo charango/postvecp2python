@@ -65,6 +65,12 @@ def plotzcut(what='', ext=''):
             if par.field == 'disst':
                 array = myfield.data[:,:,1,k]
                 strfield = 'Thermal dissipation'
+            if par.field == 'emu':
+                array = myfield.data[:,:,0,k]
+                strfield = 'Chemical energy'
+            if par.field == 'dissmu':
+                array = myfield.data[:,:,1,k]
+                strfield = 'Chemical dissipation'
 
 
             # Option to multiply field by distance to rotation axis,
