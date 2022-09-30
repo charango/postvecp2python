@@ -60,11 +60,17 @@ def plotzcut(what='', ext=''):
                 array = myfield.data[:,:,2,k]
                 strfield = 'Shear power'
             if par.field == 'et':
+                array = np.abs(myfield.data[:,:,0,k])
+                strfield = '|Thermal energy|'
+            if par.field == 'emu':
                 array = myfield.data[:,:,0,k]
-                strfield = 'Thermal energy'
+                strfield = 'Chemical energy'
             if par.field == 'disst':
+                array = np.abs(myfield.data[:,:,1,k])
+                strfield = '|Thermal dissipation|'
+            if par.field == 'dissmu':
                 array = myfield.data[:,:,1,k]
-                strfield = 'Thermal dissipation'
+                strfield = 'Chemical dissipation'
 
 
             # Option to multiply field by distance to rotation axis,
