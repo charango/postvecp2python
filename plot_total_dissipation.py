@@ -21,7 +21,7 @@ def plottotaldissipation():
     Yt = np.zeros(len(par.directory))  # thermal dissipation
     Yc = np.zeros(len(par.directory))  # chemical dissipation
     Yr = np.zeros(len(par.directory))  # power in differential rotation
-    Yp = np.zeros(len(par.directory))  # pressure work
+    Yp = np.zeros(len(par.directory))  # power of the tidal volume forcing
     Ye = np.zeros(len(par.directory))  # relative erreur
     
     # loop over directories
@@ -36,11 +36,11 @@ def plottotaldissipation():
 
         Yv[i] = res[0]  # viscous dissipation
         Yt[i] = res[1]  # thermal dissipation
-        Yp[i] = res[2]  # pressure work
+        Yp[i] = res[2]  # power of the tidal volume forcing
         Yr[i] = res[3]  # power in differential rotation
         X[i]  = res[4]  # forcing frequency
         Yc[i] = res[5]  # chemical dissipation
-        Ye[i] = (Yp[i]+Yv[i]+Yt[i]+Yc[i])/Yp[i]
+        Ye[i] = np.abs((Yp[i]+Yv[i]+Yt[i]+Yc[i])/Yp[i])
         
     # -----------------------
     # figure and axes properties
@@ -53,7 +53,7 @@ def plottotaldissipation():
     ax.tick_params(axis='x', which='minor', top=True)
     ax.tick_params(axis='y', which='minor', right=True)
     ax.set_yscale('log')
-    ax.set_xlabel(r'Forcing frequency $\omega_p$ in inertial frame')
+    ax.set_xlabel(r'Doppler-shited forcing frequency $\gamma / 2\Omega$')
     ax.set_ylabel(r'Dissipation')
     #ax.set_xlim(X.min(),X.max())
     ax.grid(axis='both', which='major', ls='-', alpha=0.8)
@@ -61,7 +61,7 @@ def plottotaldissipation():
     # modes with negative damping rates are shown by a blue filled
     # circle, those with positive damping rates are shown by a red
     # filled circle
-    ax.scatter(X,np.abs(Yp),s=10,marker='o',color='tab:orange',label='Pressure work')
+    ax.scatter(X,np.abs(Yp),s=10,marker='o',color='tab:orange',label='|tidal power|')
     ax.scatter(X,np.abs(Yv),s=10,marker='o',color='tab:blue',label='viscous dissipation')
     ax.scatter(X,np.abs(Yt),s=10,marker='o',color='tab:red',label='|thermal dissipation|')
     ax.scatter(X,np.abs(Yc),s=10,marker='o',color='tab:green',label='chemical dissipation')
@@ -73,7 +73,7 @@ def plottotaldissipation():
 
     # legend
     from matplotlib.lines import Line2D
-    legend = plt.legend(loc='upper left',fontsize=13,facecolor='white',edgecolor='white',framealpha=1.0,numpoints=1,bbox_to_anchor=(0.6,0.93),bbox_transform=plt.gcf().transFigure)
+    legend = plt.legend(loc='upper left',fontsize=13,facecolor='white',edgecolor='white',framealpha=1.0,numpoints=1,bbox_to_anchor=(0.2,0.33),bbox_transform=plt.gcf().transFigure)
     for line, text in zip(legend.get_lines(), legend.get_texts()):
         text.set_color(line.get_color())
     
@@ -93,14 +93,14 @@ def plottotaldissipation():
     # second figure: relative error #
     # ===================
     fig = plt.figure(figsize=(8.,8.))
-    plt.subplots_adjust(left=0.16, right=0.98, top=0.96, bottom=0.14)
+    plt.subplots_adjust(left=0.20, right=0.96, top=0.96, bottom=0.14)
     ax = fig.gca()
     
     ax.tick_params(top='on', right='on', length = 5, width=1.0, direction='out')
     ax.tick_params(axis='x', which='minor', top=True)
     ax.tick_params(axis='y', which='minor', right=True)
 
-    ax.set_xlabel(r'Forcing frequency $\omega_p$ in inertial frame')
+    ax.set_xlabel(r'Doppler-shited forcing frequency $\gamma / 2\Omega$')
     ax.set_ylabel(r'Relative error')
     ax.grid(axis='both', which='major', ls='-', alpha=0.8)
 
