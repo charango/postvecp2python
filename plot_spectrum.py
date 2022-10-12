@@ -30,6 +30,9 @@ def plotspectrum():
         omi = myfield.omi
         globstr = myfield.globstr
 
+        globstr += r' $\gamma=$'+format(myfield.gamma,'.4f')
+        
+
         # get number of domains
         ndom = len(myfield.ck[0,:,0,0])
 
@@ -123,3 +126,30 @@ def plotspectrum():
 
             if par.onemode == 'Yes':
                 break
+
+
+    # ------------------
+    # finally concatenate png if movie requested
+    # ------------------
+    if par.movie == 'Yes':
+        # png files that have been created above
+        allpngfiles = ['spectrum_mode0_out'+str(x).zfill(3)+'.png' for x in range(len(par.directory))]
+        str_on_start_number = str(0)
+        # input files for ffpmeg
+        input_files = 'spectrum_mode0_out%03d.png'
+        # output file for ffmpeg
+        filempg = 'spectrum_mode0_'+str(par.directory[0])+'_'+str(par.directory[len(par.directory)-1])+'.mpg'
+        # call to python-ffmpeg
+        import ffmpeg
+        (
+            ffmpeg            
+            .input(input_files, framerate=10, start_number=str_on_start_number)
+            # framerate=10 means the video will play at 10 of the original images per second
+            .output(filempg, r=30, pix_fmt='yuv420p', **{'qscale:v': 3})
+            # r=30 means the video will play at 30 frames per second
+            .overwrite_output()
+            .run()
+        )
+        # erase png files
+        allfiles = ' '.join(allpngfiles)
+        os.system('rm -f '+allfiles)
