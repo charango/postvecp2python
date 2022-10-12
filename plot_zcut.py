@@ -250,7 +250,7 @@ def plotzcut(what='', ext=''):
                     strtau = r'$\tau=$'+par.str_fmt(omr[k])
                     ax.text(0.99,0.94,strtau,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
             else:
-                strfq  = r'$|\gamma|=$'+format(myfield.gamma,'.4f')
+                strfq  = r'$\gamma=$'+format(myfield.gamma,'.4f')
                 ax.text(0.99,0.99,strfq,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
             # display global string with main parameters in the bottom
             # use of set_title along with negative pad allows string
