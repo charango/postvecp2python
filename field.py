@@ -39,11 +39,17 @@ class Field(Mesh):
             self.globstr += r'$\;\;\eta$='+str(self.eta)
         if 'omslope' in dir(self) and self.omslope != 0.0:
             self.globstr += r'$\;\;\sigma$='+str(self.omslope)
+        if 'ometa' in dir(self) and self.ometa != 0.0:
+            self.globstr += r'$\;\;\Omega_{\eta}$='+str(self.ometa)
+            self.omslope = np.log(self.ometa)/np.log(self.eta)
+            print('self.omslope = ', self.omslope)
         if 'epsilon' in dir(self) and self.epsilon != 0.0:
             self.globstr += r'$\;\;\epsilon$='+str(self.epsilon)
         if 'n' in dir(self) and self.n != 0.0:
             self.globstr += r'$\;\;N$='+str(self.n)
             self.n2 = self.n*self.n
+        else:
+            self.n2 = 0.0
         if 'pr' in dir(self) and self.pr != 0.0:
             self.globstr += r'$\;\;Pr$='+str(self.pr)
         if 'sc' in dir(self) and self.sc != 0.0:
@@ -77,6 +83,8 @@ class Field(Mesh):
                 print('starting calculation of meridional cuts...')
             if (par.field == 'ek' or par.field == 'dissv' or par.field == 'shear'):
                 (self.data,self.field_names) = self.read_field('dissec')
+            if (par.field == 'ur' or par.field == 'realur' or par.field == 'uth' or par.field == 'uphi' or par.field == 'absu'):
+                (self.data,self.field_names) = self.read_field('chvit')
             if (par.field == 'et' or par.field == 'disst'):
                 (self.data,self.field_names) = self.read_field('temper')
             if (par.field == 'emu' or par.field == 'dissmu'):
@@ -121,6 +129,7 @@ class Field(Mesh):
             self.nth = 2
             self.lmin = 0
             self.omslope = 0.0
+            self.ometa = 0.0
             self.epsilon = 0.0
             self.gamma = 0.0
             self.eta = 0.0
@@ -158,17 +167,22 @@ class Field(Mesh):
 
             # infer type of differential rotation based on reading
             # parameters omslope and epsilon via vecp header:
-            if self.omslope == 0.0 and self.epsilon == 0.0:
+            if self.omslope == 0.0 and self.epsilon == 0.0 and self.ometa == 0.0:
                 self.rotation = 'solid'    
-            if self.omslope != 0.0:
+            if self.omslope != 0.0 or self.ometa != 0.0:
                 self.rotation = 'shellular'
-
+            # override self.rotation if rotation is specified in paramsp2p.dat!
+            if ( ('diffrotation' in open('paramsp2p.dat').read()) and (par.diffrotation != '#')):
+                self.rotation = par.diffrotation
+                
             if self.verbose == 'Yes':
                 print('number of eigenmodes found: ',self.nmodes)
                 print('eigenfrequencies read in valp:')
                 for i in range(self.nmodes):
                     print(self.omi[i],self.omr[i])
                 print('rotation = ', self.rotation)
+
+        
 
                 
     def read_array(self, f, n1, n2):
@@ -274,11 +288,8 @@ class Field(Mesh):
         step_in_ds = False
         step_in_dz = False
         
-        # mode's frequency in inertial frame
-        omegap = omega  
-
         # check that initial condition is in hyperbolique domain (xi > 0)
-        (xi,dzds0,dsdz0,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
+        (xi,dzds0,dsdz0,buf) = self.compute_dzds_dsdz_caract(omega,slope,s,z)
         if (xi < 0.0):
             print('beware that xi = ',xi)
             sys.exit('wrong choice of initial condition for the calculation of characteristics, as xi < 0: ')
@@ -294,8 +305,8 @@ class Field(Mesh):
             zarray[k] = z
 
             if k != 0:
-                (xi_prev,dzds_prev,dsdz_prev,buf) = self.compute_dzds_dsdz_caract(omegap,slope,sarray[k-1],zarray[k-1])
-            (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
+                (xi_prev,dzds_prev,dsdz_prev,buf) = self.compute_dzds_dsdz_caract(omega,slope,sarray[k-1],zarray[k-1])
+            (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omega,slope,s,z)
 
             # this 'if condition' is required to avoid newz be a NaN in
             # case xi would be < 0:
@@ -349,7 +360,7 @@ class Field(Mesh):
                 # wrt s, or dzx(z + sds/dz) needs to change sign if we
                 # integrate wrt z
                 if (newr < self.r.min() or newr > self.r.max()):
-                    (bufxi,bufdzds,bufdsdz,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
+                    (bufxi,bufdzds,bufdsdz,buf) = self.compute_dzds_dsdz_caract(omega,slope,s,z)
                     if step_in_ds == True:
                         bufs = s+ds
                         bufz = z+bufdzds*ds
@@ -372,7 +383,7 @@ class Field(Mesh):
                         z = newz+dz
                         s = news+dsdz_prev*dz                    
 
-                (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omegap,slope,s,z)
+                (xi,dzds,dsdz,buf) = self.compute_dzds_dsdz_caract(omega,slope,s,z)
                 if step_in_ds == True:
                     news = s+ds
                     newz = z+dzds*ds
@@ -405,7 +416,7 @@ class Field(Mesh):
     # with differential rotation and a constant BVF.
     #
     # input parameters:
-    # omegap = mode's frequency in inertial frame
+    # omegap = mode's frequency
     # N = Brunt-Vaisala frequency (constant so far)
     # slope = +1 or -1
     # s,z: local coordinates inside the shell
@@ -444,17 +455,18 @@ class Field(Mesh):
         if self.rotation == 'conical':
             Omega = 1.0 + self.epsilon*s*s/(s*s+z*z)
             Az = -4.0*Omega*self.epsilon*(s**3.0)*z*((s*s+z*z)**(-2.0))
-            As = 4.0*(Omega**2.0)*(1.0 + self.epsilon*s*s*z*z*((s*s+z*z)**(-2.0))/4.0/Omega/Omega)
-        
-        # case where mode has been computed with one of Michel's eq
-        # files, ie with Michel's code units where time is in units of
-        # 1/2Omega instead of 1/Omega!
-        if par.eq_file_michel == 'Yes':
-            omegap *= 2.0
-            omegap -= self.m*Omega
+            As = 4.0*(Omega**2.0)*(1.0 + self.epsilon*s*s*z*z*((s*s+z*z)**(-2.0))/4.0/Omega/Omega)        
             
         # Doppler-shifted frequency and its square:
-        Omegatilde = omegap + self.m*Omega
+        if par.frame == 'inertial':
+            Omegatilde = omegap + self.m*Omega
+        if par.frame == 'rotating':
+            # case where mode has been computed with one of Michel's eq
+            # files, ie with Michel's code units where time is in units of
+            # 1/2Omega instead of 1/Omega!
+            if par.fq_unit == 'M':
+                omegap *= 2.0
+            Omegatilde = omegap - self.m + self.m*Omega
         omega2 = Omegatilde**2.0
 
         # Brunt-Vaisala frequency squared N2:
@@ -477,7 +489,7 @@ class Field(Mesh):
         # case where mode has been computed with one of Michel's eq
         # files, ie with Michel's code units where time is in units of
         # 1/2Omega instead of 1/Omega!
-        if par.eq_file_michel == 'Yes':
+        if par.fq_unit == 'M':
             N2 *= 4.0
                 
         r2 = s*s + z*z
@@ -515,8 +527,11 @@ class Field(Mesh):
             omega_out = 1.0
 
         # case where mode has been computed with one of Michel's eq files!
-        if par.eq_file_michel == 'Yes':
+        if par.fq_unit == 'M':
             omega *= 2.0
+
+        # here omega = frequency in non-rotating frame
+        if par.frame == 'rotating':
             omega -= self.m
             
         # Doppler-shifted frequencies at inner and outer radii:
