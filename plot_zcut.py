@@ -25,10 +25,16 @@ def plotzcut(what='', ext=''):
     # first import global variables
     import par
     colored_cmap=par.mycolormap
-    if par.mycolormap == 'auto':
+    if colored_cmap == 'auto':
        strlog = 'log10'
+       color_caract   = 'xkcd:lightblue'
+       color_turning  = 'xkcd:lightgreen'
+       color_critical = 'xkcd:blue'
     else:
        strlog = ''
+       color_caract = 'white'
+       color_turning  = 'xkcd:green'
+       color_critical = 'xkcd:pink'
 
     # loop over directories
     for i in range(len(par.directory)):
@@ -53,33 +59,66 @@ def plotzcut(what='', ext=''):
             if par.field == 'ek':
                 array = myfield.data[:,:,0,k]
                 strfield = 'Kinetic energy'
+                
             if par.field == 'dissv':
                 array = myfield.data[:,:,1,k]
                 strfield = 'Viscous dissipation'
+                
             if par.field == 'shear':
                 array = myfield.data[:,:,2,k]
                 strfield = 'Shear power'
+                
             if par.field == 'et':
                 array = np.abs(myfield.data[:,:,0,k])
                 strfield = '|Thermal energy|'
+                
             if par.field == 'emu':
                 array = myfield.data[:,:,0,k]
                 strfield = 'Chemical energy'
+                
             if par.field == 'disst':
                 array = np.abs(myfield.data[:,:,1,k])
                 strfield = '|Thermal dissipation|'
+                
             if par.field == 'dissmu':
                 array = myfield.data[:,:,1,k]
                 strfield = 'Chemical dissipation'
+                
+            # Velocity components:
+            # i=0: radial velocity, i=2: latitudinal, i=4: azimuthal
+            # X[:,:,i,k] = real part of ith velocity component
+            # X[:,:,i+1,k] = imaginary part of ith velocity component
+            if par.field == 'ur':
+                array = np.sqrt(myfield.data[:,:,0,k]*myfield.data[:,:,0,k] + myfield.data[:,:,1,k]*myfield.data[:,:,1,k])
+                strfield = '|Radial velocity|'
+            if par.field == 'realur':
+                array = myfield.data[:,:,0,k]
+                strfield = 'Re(Radial velocity)'
+                
+            if par.field == 'uth':
+                array = np.sqrt(myfield.data[:,:,2,k]*myfield.data[:,:,2,k] + myfield.data[:,:,3,k]*myfield.data[:,:,3,k])
+                strfield = '|Latudinal velocity|'
+                
+            if par.field == 'uphi':
+                array = np.sqrt(myfield.data[:,:,4,k]*myfield.data[:,:,4,k] + myfield.data[:,:,5,k]*myfield.data[:,:,5,k])
+                strfield = '|Azimuthal velocity|'
 
-
+            if par.field == 'absu':
+                array = np.sqrt(myfield.data[:,:,0,k]*myfield.data[:,:,0,k] +\
+                                myfield.data[:,:,1,k]*myfield.data[:,:,1,k] +\
+                                myfield.data[:,:,2,k]*myfield.data[:,:,2,k] +\
+                                myfield.data[:,:,3,k]*myfield.data[:,:,3,k] +\
+                                myfield.data[:,:,4,k]*myfield.data[:,:,4,k] +\
+                                myfield.data[:,:,5,k]*myfield.data[:,:,5,k])                                
+                strfield = '|velocity|'
+                
             # Option to multiply field by distance to rotation axis,
             # to enhance contrast:
             if par.multbyaxisdist == 'Yes':
                 for ii in range(len(X)):
                     for jj in range(len(X[ii])):
                         array[ii][jj]=array[ii][jj]*X[ii][jj]
-                strfield += r' $\times$ s'
+                strfield += r' $\times$ s/R'
 
             if (strlog == 'log10'):
                strfield = r'log$_{10}$('+strfield+')'
@@ -95,6 +134,8 @@ def plotzcut(what='', ext=''):
             else:
                 myfieldmax = array.max()
                 myfieldmin = 1e-6 * myfieldmax
+                if par.field == 'realur':
+                    myfieldmin = array.min()
                 strfield += ' (code units)'
                 
             if par.fieldmin != '#':
@@ -103,6 +144,8 @@ def plotzcut(what='', ext=''):
                 myfieldmax = par.fieldmax
 
             mynorm = matplotlib.colors.LogNorm(vmin=myfieldmin,vmax=myfieldmax)
+            if ( ('log_colorscale' in open('paramsp2p.dat').read()) and par.log_colorscale ) == 'No':
+                mynorm = matplotlib.colors.Normalize(vmin=myfieldmin,vmax=myfieldmax)
             
             # -----------------------
             # CB: Lorenzo's color scale used in ParaView:
@@ -158,8 +201,8 @@ def plotzcut(what='', ext=''):
             ax.tick_params(axis='y', which='minor', right=True)
             ax.xaxis.set_minor_locator(MultipleLocator(0.1))
             ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-            ax.set_xlabel('s')
-            ax.set_ylabel('z')
+            ax.set_xlabel('s/R')
+            ax.set_ylabel('z/R')
             ax.set_xlim(0.0,1.0)
             ax.set_ylim(0.0,1.0)
 
@@ -190,10 +233,7 @@ def plotzcut(what='', ext=''):
                     sc,zc = myfield.compute_characteristics(niterations=nb_iterations,omega=omi[k])
                 else:
                     sc,zc = myfield.compute_characteristics(niterations=nb_iterations,omega=myfield.gamma)
-                if par.mycolormap == 'auto':
-                    ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color='green')
-                else:
-                    ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color='white')
+                ax.scatter(sc,zc,s=3,marker='.',alpha=0.5,color=color_caract)
 
             # ------------------
             # overplot critical latitudes
@@ -227,14 +267,14 @@ def plotzcut(what='', ext=''):
                 else:
                     (xi,buf,buf,omegatilde) = myfield.compute_dzds_dsdz_caract(myfield.gamma,1.0,X,Y)
                 if par.plot_turning_surfaces == 'Yes':
-                    plt.contour(X,Y,xi,levels=[0],colors='tab:brown',alpha=1.0,linewidths=2)
+                    plt.contour(X,Y,xi,levels=[0],colors=color_turning,alpha=1.0,linewidths=2)
                 if par.plot_critical_layers == 'Yes':
                     # case there is no differential rotation, in which
                     # case omegatilde is not an array but a single float:
                     if (not omegatilde == 'False'):
                         omegatilde = omegatilde*np.ones(xi.shape[0]*xi.shape[1]).reshape(xi.shape[0],xi.shape[1])
-                    plt.contour(X,Y,omegatilde,levels=[0],colors='tab:red',alpha=1.0,linewidths=2)
-                 
+                    plt.contour(X,Y,omegatilde-1e-5,levels=[0],colors=color_critical,alpha=1.0,linewidths=2)
+                    
             # ---------------
             # display strings
             # ---------------
@@ -244,13 +284,26 @@ def plotzcut(what='', ext=''):
             # forcing frequency
             if myfield.gamma == 0.0:
                 if omi[k] != 0.0:
-                    strfq  = r'$|\omega|=$'+format(omi[k],'.4f')
+                    if par.frame == 'inertial':
+                        omi[k] += myfield.m
+                    if myfield.rotation != 'shellular':
+                        strfq  = r'$\tilde\omega/\Omega_{\rm axis}=$'+format(omi[k],'.4f')
+                    else:
+                        strfq  = r'$\tilde\omega/\Omega_{\rm surf}=$'+format(omi[k],'.4f')
                     ax.text(0.99,0.99,strfq,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
                 if omr[k] != 0.0:
-                    strtau = r'$\tau=$'+par.str_fmt(omr[k])
+                    if myfield.rotation != 'shellular':
+                        strtau = r'$\tau\Omega_{\rm axis}=$'+par.str_fmt(omr[k])
+                    else:
+                        strtau = r'$\tau\Omega_{\rm surf}=$'+par.str_fmt(omr[k])
                     ax.text(0.99,0.94,strtau,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
             else:
-                strfq  = r'$\gamma=$'+format(myfield.gamma,'.4f')
+                if par.frame == 'inertial':
+                    myfield.gamma += myfield.m
+                if myfield.rotation != 'shellular':
+                    strfq  = r'$\tilde\omega/\Omega_{\rm axis}=$'+format(myfield.gamma,'.3f')
+                else:
+                    strfq  = r'$\tilde\omega/\Omega_{\rm surf}=$'+format(myfield.gamma,'.3f')
                 ax.text(0.99,0.99,strfq,fontsize=16,color='black',horizontalalignment='right',verticalalignment='top')
             # display global string with main parameters in the bottom
             # use of set_title along with negative pad allows string
@@ -270,6 +323,8 @@ def plotzcut(what='', ext=''):
             cax.xaxis.labelpad = 8
             if par.mycolormap != 'auto':   
                 cax.xaxis.set_major_locator(ticker.LogLocator(base=10.0,numticks=8))
+            if ( ('log_colorscale' in open('paramsp2p.dat').read()) and par.log_colorscale ) == 'No':
+                cax.xaxis.set_major_locator(plt.MaxNLocator(4))
                 
             # ------------------
             # save in pdf or png files
