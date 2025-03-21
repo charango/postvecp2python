@@ -6,42 +6,45 @@
 # out01 if only directory 'out01' is to be considered
 # out01,out02,out03 if you want to display results for the three mentioned directories
 # all if you want to display results for all local directories starting as 'out*'
-directory	outhachem_corr_1_ek1em7_prim_1v2_eta0v35  # see list of examples above
-movie		No	 	# if more than one directory is specified, do we animate the z-cuts?
+
+directory			out1		# see list of examples above
+frame				inertial	# was frame rotating or inertial?
+fq_unit				C		# C (fq unit: Omega) or M (fq unit: 2Omega)
 
 ### roadmap:
-plot_spectrum	Yes		# display modes spectral content
-plot_qz_eigenfq	No		# display eigenfrequencies for a QZ run
-plot_total_dissipation   No	# display shell-integrated dissipation vs. frequency for various directories
-plot_zcut	Yes		# display meridional (z-) cut of modes
-plot_zcut_3D	No		# display meridional (z-) cut of modes, 3D version using paraview
-field		dissv		# can be so far: ek (kinetic energy), dissv (viscous dissipation),
-				# et (thermal energy) or disst (thermal dissipation),
-				# emu (chemical energy) or dissmu (chemical dissipation),
-onemode		No		# display above quantities for only first computed mode?
-normalizetomax	No		# is displayed field normalized to its maximum value?
-fieldmin			# if specified, minimum field value in colorbar
-fieldmax			# if specified, maximum field value in colorbar
+plot_spectrum			Yes		# display modes spectral content
+plot_qz_eigenfq			No		# display eigenfrequencies for a QZ run
+plot_total_dissipation   	No		# display shell-integrated dissipation vs. frequency for various directories
+plot_zcut			Yes		# display meridional (z-) cut of modes
+plot_zcut_3D			No		# display meridional (z-) cut of modes, 3D version using paraview
+movie				No	 	# if more than one directory is specified, do we animate the z-cuts?
+field				ek		# can be so far: ek (kinetic energy), dissv (viscous dissipation),
+						# et (thermal energy) or disst (thermal dissipation),
+						# emu (chemical energy) or dissmu (chemical dissipation),
+onemode				No		# display above quantities for only first computed mode?
+normalizetomax			Yes		# is displayed field normalized to its maximum value?
+fieldmin					# if specified, minimum field value in colorbar
+fieldmax					# if specified, maximum field value in colorbar
 
 ### characteristics:
-plot_caract	No		# overplot caracteristics on top of meridional cut?
-caract_s_z	0.85,0.01	# if so, enter s and z coordinates of initial point separated by a comma
-last_only	No		# only display last points along characteristics (~attractor)
-eq_file_michel	Yes		# did equation file use Michel's normalization units?
+plot_caract			No		# overplot caracteristics on top of meridional cut?
+caract_s_z			0.5,0.5		# if so, enter s and z coordinates of initial point separated by a comma
+last_only			No		# only display last points along characteristics (~attractor)
 
 ### output:
-saveaspdf	No		# save image as pdf file?
-saveaspng	Yes		# save image as png file?
+saveaspdf			Yes		# save image as pdf file?
+saveaspng			No		# save image as png file?
 
 ### display options:
-mycolormap	nipy_spectral	# nipy_spectral, auto, gist_stern, inferno, magma...
-multbyaxisdist		 No    # multiply field by distance to rotation axis (to enhance contrast)
-plot_critical_latitudes	 No	# display critical latitudes at inner and outer radial edges (solid or shellular rotation only)
-plot_turning_surfaces	 No	# display turning surfaces, if any
-plot_critical_layers	 No	# display critical layers, if any
-verbose		Yes		# display control stuff
+mycolormap			nipy_spectral	# jet, nipy_spectral, auto, gist_stern, inferno, magma...
+multbyaxisdist			No     		# multiply field by distance to rotation axis (to enhance contrast)
+plot_critical_latitudes	 	Yes		# display critical latitudes at inner and outer radial edges (solid or shellular rotation only)
+plot_turning_surfaces	 	Yes		# display turning surfaces, if any
+plot_critical_layers	 	Yes		# display critical layers, if any
+log_colorscale			Yes		# logarithmic colorscale: yes or no?
+verbose				Yes		# display control stuff
 
 # parameters for plot_zcut_3D:
-elevationfactor  1.             # elevation enhancement for plot_zcut_3D option. Default is 1.
-pv_specular      0.0            # default is 0. Produces specular reflections
-pv_light_intensity      	# If you need to enhance light. default is a function of elevationfactor. 
+elevationfactor  		1.              # elevation enhancement for plot_zcut_3D option. Default is 1.
+pv_specular      		0.0             # default is 0. Produces specular reflections
+pv_light_intensity      			# If you need to enhance light. default is a function of elevationfactor. 

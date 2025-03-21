@@ -271,7 +271,7 @@ def plotzcut(what='', ext=''):
                 if par.plot_critical_layers == 'Yes':
                     # case there is no differential rotation, in which
                     # case omegatilde is not an array but a single float:
-                    if (not omegatilde == 'False'):
+                    if (hasattr(omegatilde,"__len__") == 'False'):
                         omegatilde = omegatilde*np.ones(xi.shape[0]*xi.shape[1]).reshape(xi.shape[0],xi.shape[1])
                     plt.contour(X,Y,omegatilde-1e-5,levels=[0],colors=color_critical,alpha=1.0,linewidths=2)
                     
